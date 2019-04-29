@@ -50,12 +50,24 @@ public class CaffeineCacheManagerFactoryBean implements FactoryBean<NewsCaffeine
 		this.cacheManager.dynamic = this.dynamic;
 
 		if (this.configLocation != null) {
-			CacheLoader<Object, Object> cacheLoader = key -> {
-				TargetAwareKey simpleCacheKey = (TargetAwareKey)key;
-				Object target = simpleCacheKey.getTarget();
-				Method method = simpleCacheKey.getMethod();
-				Object[] params = simpleCacheKey.getParams();
-				return method.invoke(target, params);
+			CacheLoader<Object, Object> cacheLoader = new CacheLoader<Object, Object>() {
+				@Override
+				public Object load(Object key) throws Exception {
+					return null;
+				}
+
+				@Override
+				public Object reload(Object key, Object oldValue) throws Exception {
+					TargetAwareKey simpleCacheKey = (TargetAwareKey)key;
+					Object target = simpleCacheKey.getTarget();
+					Method method = simpleCacheKey.getMethod();
+					Object[] params = simpleCacheKey.getParams();
+					Object returnValue = method.invoke(target, params);
+					if (returnValue != null) {
+						return returnValue;
+					}
+					return oldValue;
+				}
 			};
 
 			PropertyResourceBundle property = new PropertyResourceBundle(this.configLocation.getInputStream());
